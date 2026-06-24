@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
@@ -7,6 +7,13 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
         <UseWindowsForms>true</UseWindowsForms>
+        <ApplicationIcon>Assets\project-icon.ico</ApplicationIcon>
+        <PortablePackageVersion Condition="'$(PortablePackageVersion)' == '' and '$(Version)' != ''">$(Version)</PortablePackageVersion>
+        <PortablePackageVersion Condition="'$(PortablePackageVersion)' == '' and '$(AssemblyVersion)' != ''">$(AssemblyVersion)</PortablePackageVersion>
+        <PortablePackageVersion Condition="'$(PortablePackageVersion)' == ''">1.0.0</PortablePackageVersion>
+        <PortableZipFileName>$(AssemblyName)-v$(PortablePackageVersion)-portable.zip</PortableZipFileName>
+        <PortableZipOutputPath>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', 'bin', '$(Configuration)', '$(PortableZipFileName)'))</PortableZipOutputPath>
+        <PortableZipStagingDir>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', 'obj', '$(Configuration)', '$(TargetFramework)', 'portable', '$(AssemblyName)-v$(PortablePackageVersion)'))</PortableZipStagingDir>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,6 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Resource Include="Assets\project-icon.ico" />
         <Resource Include="Assets\project-icon.png" />
     </ItemGroup>
 
@@ -25,4 +33,40 @@
             <Nullable>disable</Nullable>
         </Compile>
     </ItemGroup>
+
+    <Target Name="CreatePortableZip"
+            AfterTargets="Build"
+            Condition="'$(Configuration)' == 'Release' and '$(DesignTimeBuild)' != 'true'">
+        <ItemGroup>
+            <PortableZipFiles Include="$(TargetDir)**\*"
+                              Exclude="
+                                  $(TargetDir)**\*.pdb;
+                                  $(TargetDir)**\*.xml;
+                                  $(TargetDir)cs\**;
+                                  $(TargetDir)de\**;
+                                  $(TargetDir)es\**;
+                                  $(TargetDir)fr\**;
+                                  $(TargetDir)it\**;
+                                  $(TargetDir)ja\**;
+                                  $(TargetDir)ko\**;
+                                  $(TargetDir)pl\**;
+                                  $(TargetDir)pt-BR\**;
+                                  $(TargetDir)ru\**;
+                                  $(TargetDir)tr\**;
+                                  $(TargetDir)zh-Hans\**;
+                                  $(TargetDir)zh-Hant\**;
+                                  $(TargetDir)publish\**;
+                                  $(TargetDir)win-*\**" />
+        </ItemGroup>
+
+        <RemoveDir Directories="$(PortableZipStagingDir)" />
+        <MakeDir Directories="$(PortableZipStagingDir)" />
+        <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(PortableZipOutputPath)'))" />
+        <Copy SourceFiles="@(PortableZipFiles)"
+              DestinationFiles="@(PortableZipFiles->'$(PortableZipStagingDir)\%(RecursiveDir)%(Filename)%(Extension)')" />
+        <Delete Files="$(PortableZipOutputPath)" ContinueOnError="true" />
+        <ZipDirectory SourceDirectory="$(PortableZipStagingDir)"
+                      DestinationFile="$(PortableZipOutputPath)"
+                      Overwrite="true" />
+    </Target>
 </Project>

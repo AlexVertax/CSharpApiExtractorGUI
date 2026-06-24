@@ -7,7 +7,7 @@
         xmlns:models="clr-namespace:CSharpApiExtractorGUI.Models"
         mc:Ignorable="d"
         Title="C# API Extractor"
-        Icon="Assets/project-icon.png"
+        Icon="/Assets/project-icon.ico"
         Width="1240"
         Height="820"
         MinWidth="1080"
