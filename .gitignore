@@ -1,0 +1,20 @@
+/.artifacts/
+/.idea/
+/.vs/
+/_ReSharper.Caches/
+/docs/
+/packages/
+
+# Build outputs
+/bin/
+/obj/
+
+# User-specific files
+*.user
+*.rsuser
+*.suo
+*.userprefs
+
+# IDE files
+*.DotSettings.user
+riderModule.iml
