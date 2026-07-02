@@ -1,7 +1,11 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -14,6 +18,7 @@ namespace CSharpApiExtractorGUI.ViewModels;
 
 public sealed class MainViewModel : BindableBase
 {
+    private static readonly HttpClient httpClient = new();
     private readonly ProjectCatalogStore store = new();
     private readonly LastActiveProjectStore lastActiveProjectStore = new();
     private readonly PathDialogService pathDialogService = new();
@@ -44,6 +49,7 @@ public sealed class MainViewModel : BindableBase
         RemoveIgnorePathCommand = new RelayCommand(parameter => RemovePath(SelectedProject?.IgnorePaths, parameter as PathEntry, "ignore paths"), parameter => parameter is PathEntry);
         BrowseApiRefOutputPathCommand = new RelayCommand(_ => BrowseApiRefOutputPath(), _ => HasSelection);
         BrowseMissingItemsOutputPathCommand = new RelayCommand(_ => BrowseMissingItemsOutputPath(), _ => HasSelection);
+        OpenOneFileDocsCommand = new RelayCommand(_ => OpenOneFileDocs(), _ => true);
         SaveCommand = saveCommand;
         ExportCommand = exportCommand;
 
@@ -138,6 +144,8 @@ public sealed class MainViewModel : BindableBase
 
     public ICommand BrowseMissingItemsOutputPathCommand { get; }
 
+    public ICommand OpenOneFileDocsCommand { get; }
+
     public ICommand SaveCommand { get; }
 
     public ICommand ExportCommand { get; }
@@ -206,12 +214,23 @@ public sealed class MainViewModel : BindableBase
 
             Extractor extractor = new(project.ToExtractorOptions());
             ApiDocument document = await extractor.ExtractAsync();
+            string apiRefJson = document.ToJsonString(pretty: true);
 
-            File.WriteAllText(project.ApiRefOutputPath, document.ToJsonString(pretty: true));
+            File.WriteAllText(project.ApiRefOutputPath, apiRefJson);
 
             if (!string.IsNullOrWhiteSpace(project.MissingItemsOutputPath))
             {
                 File.WriteAllLines(project.MissingItemsOutputPath, document.MissedItems);
+            }
+
+            string syncStatus = string.Empty;
+            try
+            {
+                syncStatus = await TrySyncOneFileDocsAsync(project.OneFileDocsSyncUrl, apiRefJson);
+            }
+            catch (Exception exception)
+            {
+                syncStatus = $"Failed: {exception.Message}";
             }
 
             dialogService.ShowExportSummary(
@@ -225,9 +244,12 @@ public sealed class MainViewModel : BindableBase
                 document.Namespaces.Sum(item => item.Types.Count(type => string.Equals(type.Kind, "struct", StringComparison.OrdinalIgnoreCase))),
                 document.Namespaces.Sum(item => item.Types.Count(type => string.Equals(type.Kind, "enum", StringComparison.OrdinalIgnoreCase))),
                 document.Namespaces.Sum(item => item.Types.Count(type => string.Equals(type.Kind, "record", StringComparison.OrdinalIgnoreCase))),
-                document.MissedItems.Count);
+                document.MissedItems.Count,
+                syncStatus);
 
-            StatusMessage = $"Export completed for \"{project.Title}\".";
+            StatusMessage = string.IsNullOrWhiteSpace(syncStatus)
+                ? $"Export completed for \"{project.Title}\"."
+                : $"Export completed for \"{project.Title}\". {syncStatus}";
         }
         catch (Exception exception)
         {
@@ -368,6 +390,44 @@ public sealed class MainViewModel : BindableBase
             SelectedProject.MissingItemsOutputPath = selectedPath;
             Validate();
         }
+    }
+
+    private static async Task<string> TrySyncOneFileDocsAsync(string? syncUrl, string apiRefJson)
+    {
+        if (string.IsNullOrWhiteSpace(syncUrl))
+        {
+            return string.Empty;
+        }
+
+        if (!Uri.TryCreate(syncUrl.Trim(), UriKind.Absolute, out Uri? endpoint) ||
+            (endpoint.Scheme != Uri.UriSchemeHttp && endpoint.Scheme != Uri.UriSchemeHttps))
+        {
+            throw new InvalidOperationException("OneFileDocs Sync URL must be a valid absolute HTTP or HTTPS URL.");
+        }
+
+        using StringContent content = new(
+            JsonSerializer.Serialize(new { content = apiRefJson }),
+            Encoding.UTF8,
+            "application/json");
+
+        using HttpResponseMessage response = await httpClient.PostAsync(endpoint, content);
+        if (response.IsSuccessStatusCode)
+        {
+            return $"Success ({(int)response.StatusCode}).";
+        }
+
+        string responseBody = await response.Content.ReadAsStringAsync();
+        throw new InvalidOperationException(
+            $"Failed ({(int)response.StatusCode} {response.ReasonPhrase}).{Environment.NewLine}{responseBody}");
+    }
+
+    private static void OpenOneFileDocs()
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "https://onefiledocs.com",
+            UseShellExecute = true
+        });
     }
 
     private string CreateProjectId()

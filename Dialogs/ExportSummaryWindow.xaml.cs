@@ -19,7 +19,8 @@ public partial class ExportSummaryWindow : Window
         int structCount,
         int enumCount,
         int recordCount,
-        int missedItemCount)
+        int missedItemCount,
+        string? oneFileDocsSyncMessage)
     {
         InitializeComponent();
         Owner = System.Windows.Application.Current?.MainWindow;
@@ -34,7 +35,8 @@ public partial class ExportSummaryWindow : Window
             structCount,
             enumCount,
             recordCount,
-            missedItemCount);
+            missedItemCount,
+            oneFileDocsSyncMessage);
     }
 
     private void CloseButton_OnClick(object sender, RoutedEventArgs e)
@@ -69,7 +71,8 @@ public partial class ExportSummaryWindow : Window
             int structCount,
             int enumCount,
             int recordCount,
-            int missedItemCount)
+            int missedItemCount,
+            string? oneFileDocsSyncMessage)
         {
             ProjectTitle = projectTitle;
             NamespaceCount = namespaceCount;
@@ -81,6 +84,8 @@ public partial class ExportSummaryWindow : Window
             EnumCount = enumCount;
             RecordCount = recordCount;
             MissedItemCount = missedItemCount;
+            OneFileDocsSyncMessage = oneFileDocsSyncMessage ?? string.Empty;
+            SummarySubtitle = BuildSummarySubtitle(OneFileDocsSyncMessage);
         }
 
         public string ProjectTitle { get; }
@@ -102,5 +107,24 @@ public partial class ExportSummaryWindow : Window
         public int RecordCount { get; }
 
         public int MissedItemCount { get; }
+
+        public string OneFileDocsSyncMessage { get; }
+
+        public string SummarySubtitle { get; }
+
+        private static string BuildSummarySubtitle(string oneFileDocsSyncMessage)
+        {
+            if (string.IsNullOrWhiteSpace(oneFileDocsSyncMessage))
+            {
+                return "Export completed";
+            }
+
+            if (oneFileDocsSyncMessage.StartsWith("Success", StringComparison.Ordinal))
+            {
+                return "Export and upload completed";
+            }
+
+            return "Export completed. Upload failed.";
+        }
     }
 }

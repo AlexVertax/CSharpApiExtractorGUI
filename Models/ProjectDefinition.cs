@@ -13,6 +13,7 @@ public sealed class ProjectDefinition : BindableBase
     private string listTitle = "New Project";
     private string apiRefOutputPath = string.Empty;
     private string? missingItemsOutputPath;
+    private string? oneFileDocsSyncUrl;
     private bool includeInternalMembers = true;
     private bool includeMissedItems = true;
 
@@ -60,6 +61,12 @@ public sealed class ProjectDefinition : BindableBase
         set => SetProperty(ref missingItemsOutputPath, value);
     }
 
+    public string? OneFileDocsSyncUrl
+    {
+        get => oneFileDocsSyncUrl;
+        set => SetProperty(ref oneFileDocsSyncUrl, value);
+    }
+
     public bool IncludeInternalMembers
     {
         get => includeInternalMembers;
@@ -101,6 +108,7 @@ public sealed class ProjectDefinition : BindableBase
         listTitle = title;
         id ??= string.Empty;
         apiRefOutputPath ??= string.Empty;
+        oneFileDocsSyncUrl ??= string.Empty;
     }
 
     private static ObservableCollection<PathEntry> CreatePathEntries(IEnumerable<string>? values)

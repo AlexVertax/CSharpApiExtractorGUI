@@ -10,7 +10,7 @@
         <ApplicationIcon>Assets\project-icon.ico</ApplicationIcon>
         <PortablePackageVersion Condition="'$(PortablePackageVersion)' == '' and '$(Version)' != ''">$(Version)</PortablePackageVersion>
         <PortablePackageVersion Condition="'$(PortablePackageVersion)' == '' and '$(AssemblyVersion)' != ''">$(AssemblyVersion)</PortablePackageVersion>
-        <PortablePackageVersion Condition="'$(PortablePackageVersion)' == ''">1.0.0</PortablePackageVersion>
+        <PortablePackageVersion Condition="'$(PortablePackageVersion)' == ''">1.1.0</PortablePackageVersion>
         <PortableZipFileName>$(AssemblyName)-v$(PortablePackageVersion)-portable.zip</PortableZipFileName>
         <PortableZipOutputPath>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', 'bin', '$(Configuration)', '$(PortableZipFileName)'))</PortableZipOutputPath>
         <PortableZipStagingDir>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', 'obj', '$(Configuration)', '$(TargetFramework)', 'portable', '$(AssemblyName)-v$(PortablePackageVersion)'))</PortableZipStagingDir>

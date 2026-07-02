@@ -48,7 +48,8 @@ public sealed class DialogService
         int structCount,
         int enumCount,
         int recordCount,
-        int missedItemCount)
+        int missedItemCount,
+        string? oneFileDocsSyncMessage)
     {
         ExportSummaryWindow window = new(
             projectTitle,
@@ -61,7 +62,8 @@ public sealed class DialogService
             structCount,
             enumCount,
             recordCount,
-            missedItemCount);
+            missedItemCount,
+            oneFileDocsSyncMessage);
         window.ShowDialog();
     }
 }

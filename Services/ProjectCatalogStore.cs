@@ -65,7 +65,8 @@ public sealed class ProjectCatalogStore
                         new PathEntry { Value = defaultSourcePath }
                     },
                     ApiRefOutputPath = Path.Combine(documentsPath, "api-ref.json"),
-                    MissingItemsOutputPath = Path.Combine(documentsPath, "missing-items.txt")
+                    MissingItemsOutputPath = Path.Combine(documentsPath, "missing-items.txt"),
+                    OneFileDocsSyncUrl = string.Empty
                 }
             ]
         };
